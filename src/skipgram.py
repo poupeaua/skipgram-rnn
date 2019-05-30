@@ -3,6 +3,8 @@ from gensim.models import Word2Vec
 import multiprocessing
 import logging
 import os
+import argparse
+import yaml
 
 
 # API :
@@ -13,7 +15,19 @@ import os
 
 cpu_count = multiprocessing.cpu_count()
 
-def main():
+
+# ----------------------------------------------------------------------------
+
+DEFAULT_STORE_MODEL_PATH = "/u/a/2019/apoupeau/Documentos/recpatr/skipgram-rnn/models"
+DEFAULT_MODEL_NAME = "model_test"
+
+#  ----------------------------------------------------------------------------
+
+
+def skipgram(load,
+             model_path,
+             model_name,
+             save_embeddings):
 
     # sentences / corpus = None so the model is left uninitialized
     model = Word2Vec(None,
@@ -23,14 +37,14 @@ def main():
                      hs=hs,
                      negative=negative)
 
+    # save
+    model.save(os.path.join(save_path, save_name))
+
     # train
     model.train(sentences=sentences,
                 total_examples=None,
                 total_words=None,
                 epochs=None)
-
-    # save
-    model.save(os.path.join(save_path, save_name))
 
     # load
     model.load(os.path.join(save_path, save_name))
@@ -40,3 +54,21 @@ def main():
 
     # load vectors representation of words
     wv = KeyedVectors.load("model.wv", mmap='r')
+
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-load", action="store_true")
+    parser.add_argument("-model_path", type=str, required=True, default=DEFAULT_STORE_MODEL_PATH)
+    parser.add_argument("-model_name", type=str, required=True, default=DEFAULT_MODEL_NAME)
+    parser.add_argument("-save_embeddings", action="store_true")
+
+    args = parser.parse_args()
+
+    model_config = yaml.dump(yaml.load(os.path.join(model_path, model_name)))
+
+    skipgram(load=args.load,
+             model_path=args.model_path,
+             model_name=args.model_name,
+             save_embeddings=args.save_embeddings)

@@ -3,6 +3,7 @@ import gensim
 import numpy as np
 import logging
 import os
+import argparse
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
@@ -104,10 +105,16 @@ def loadReviewsNpy(path=PATH_STORE_REVIEWS_AS_ARRAYS,
     return np.load(file=os.path.join(path, file_name))
 
 
-saveReviewsNpy(nb_files=2, file_name="test.npy")
-test = loadReviewsNpy(file_name="test.npy")
-print(test.shape)
-print(test)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-nf", type=int, required=True)
+    parser.add_argument("-file_name", type=str, required=True)
+
+    args = parser.parse_args()
+
+    saveReviewsNpy(nb_files=args.nf, file_name=args.file_name)
+    test = loadReviewsNpy(file_name=args.file_name)
 
 
 # txt = open(file="data/aclImdb/test/pos/6326_8.txt").read()
