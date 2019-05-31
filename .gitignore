@@ -4,9 +4,6 @@ env.yml
 # Pycharm
 .idea/
 venv/
-
-testing/
-
 __pycache__/
 
 *.model

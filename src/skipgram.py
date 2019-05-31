@@ -13,11 +13,12 @@ abspath_file = os.path.abspath(os.path.dirname(__file__))
 skipgram_rnn_path = "/".join(abspath_file.split("/")[:-1])
 sys.path.append(skipgram_rnn_path)
 
-from tools.preprocessing import iterReviewsFile
+from tools.preprocessing import load_reviews_npy
+
+from tools.preprocessing import iter_reviews_file
 
 # get environnement info
 env = yaml.load(open(os.path.join(skipgram_rnn_path, "env.yml"), 'r'), Loader=Loader)
-
 
 # API :
 # https://radimrehurek.com/gensim/models/base_any2vec.html#gensim.models.base_any2vec.BaseWordEmbeddingsModel
@@ -39,6 +40,7 @@ PATH_TO_QUESTIONS_WORDS_FILE = os.path.join(DEFAULT_SKIPGRAM_STORE_MODEL_PATH, "
 DEFAULT_SKIPGRAM_MODEL_NAME = "model_test"
 SKIPGRAM_MODEL_CONFIG_FILE = "config.yml"
 
+
 #  ----------------------------------------------------------------------------
 
 
@@ -48,14 +50,13 @@ class MyReviews(object):
         self.nb_reviews = nb_reviews
 
     def __iter__(self):
-        for i, filepath in enumerate(iterReviewsFile()):
+        for i, filepath in enumerate(iter_reviews_file()):
             with open(file=filepath) as f:
                 for line in f:
                     # do some pre-processing and return a list of words for each review text
                     yield gensim.utils.simple_preprocess(line)
-            if i >= self.nb_reviews-1:
+            if i >= self.nb_reviews - 1:
                 break
-
 
 
 def skipgram(init,
@@ -88,11 +89,10 @@ def skipgram(init,
     # allows display info
     logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
-
     # define some path variable to clean the code
     path_to_model_dir = os.path.join(sg_model_path, sg_model_name)
-    path_to_model_file = os.path.join(path_to_model_dir, sg_model_name+".model")
-    path_to_keyed_vectors_file = os.path.join(path_to_model_dir, sg_model_name+".kv")
+    path_to_model_file = os.path.join(path_to_model_dir, sg_model_name + ".model")
+    path_to_keyed_vectors_file = os.path.join(path_to_model_dir, sg_model_name + ".kv")
 
     # use a memory-friendly iterator
     sentences = MyReviews(nb_reviews=NB_REVIEWS)
@@ -120,7 +120,6 @@ def skipgram(init,
         # the user is informed that he has to choise init or load arguments
         raise RuntimeError("You have either to choose parameter -init or -load")
 
-
     if train:
         # train the model
         model.train(sentences=sentences,
@@ -129,7 +128,6 @@ def skipgram(init,
 
         # always save the model after training
         model.save(path_to_model_file)
-
 
     if save_kv:
         # save vectors representation of words
@@ -142,7 +140,6 @@ def skipgram(init,
 
     if accuracy:
         model.wv.accuracy(questions=PATH_TO_QUESTIONS_WORDS_FILE)
-
 
 
 if __name__ == "__main__":
