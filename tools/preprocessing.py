@@ -18,7 +18,7 @@ PATHS_DATA = ["/u/a/2019/apoupeau/Documentos/recpatr/skipgram-rnn/data/aclImdb/t
 
 PATH_STORE_REVIEWS_AS_ARRAYS = "/u/a/2019/apoupeau/Documentos/recpatr/skipgram-rnn/data/reviews_as_arrays/"
 
-DEFAULT_STORE_FILENAME = "reviews_as_arrays.npy"
+DEFAULT_STORE_FILENAME = "test.npy" # reviews_as_arrays.npy
 
 # ----------------------------------------------------------------------------
 
@@ -102,7 +102,7 @@ def loadReviewsNpy(path=PATH_STORE_REVIEWS_AS_ARRAYS,
             path (str) : path to look for the array file .npy.
             file_name (str) : name of the file to look for in the path.
     """
-    return np.load(file=os.path.join(path, file_name))
+    return np.load(file=os.path.join(path, file_name), allow_pickle=True)
 
 
 
@@ -115,6 +115,7 @@ if __name__ == "__main__":
 
     saveReviewsNpy(nb_files=args.nf, file_name=args.file_name)
     test = loadReviewsNpy(file_name=args.file_name)
+    print(test)
 
 
 # txt = open(file="data/aclImdb/test/pos/6326_8.txt").read()
