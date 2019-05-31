@@ -3,21 +3,28 @@ import gensim
 import numpy as np
 import logging
 import os
+import sys
 import argparse
+import yaml
+from yaml import Loader
 
-logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
+# allows import from skipgram-rnn directory
+abspath_file = os.path.abspath(os.path.dirname(__file__))
+skipgram_rnn_path = "/".join(abspath_file.split("/")[:-1])
+sys.path.append(skipgram_rnn_path)
+
+env = yaml.load(open(os.path.join(skipgram_rnn_path, "env.yml"), 'r'), Loader=Loader)
+
 
 # ---------------------------------------------------------------------------
 
 NB_REVIEWS = 50000
-
-PATHS_DATA = ["/u/a/2019/apoupeau/Documentos/recpatr/skipgram-rnn/data/aclImdb/test/pos",
-         "/u/a/2019/apoupeau/Documentos/recpatr/skipgram-rnn/data/aclImdb/test/neg",
-         "/u/a/2019/apoupeau/Documentos/recpatr/skipgram-rnn/data/aclImdb/train/pos",
-         "/u/a/2019/apoupeau/Documentos/recpatr/skipgram-rnn/data/aclImdb/train/neg"]
-
-PATH_STORE_REVIEWS_AS_ARRAYS = "/u/a/2019/apoupeau/Documentos/recpatr/skipgram-rnn/data/reviews_as_arrays/"
-
+PROJECT_PATH = env["project_abspath"]
+PATHS_DATA = [PROJECT_PATH+"data/aclImdb/test/pos",
+             PROJECT_PATH+"data/aclImdb/test/neg",
+             PROJECT_PATH+"data/aclImdb/train/pos",
+             PROJECT_PATH+"data/aclImdb/train/neg"]
+PATH_STORE_REVIEWS_AS_ARRAYS = PROJECT_PATH+"data/reviews_as_arrays/"
 DEFAULT_STORE_FILENAME = "test.npy" # reviews_as_arrays.npy
 
 # ----------------------------------------------------------------------------
@@ -50,12 +57,13 @@ def readReviews(nb_files, disp_info_iter=1000):
 
         Arguments:
             nb_files (int) : number of review files to read.
-            disp_info_iter (int) :
+            disp_info_iter (int) : display information every disp info iter.
 
         Returns:
             stock (array) : array that contains lists of words.
                 One list for each review.
     """
+    logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
     logging.info("reading reviews...this may take a while")
 
@@ -120,15 +128,3 @@ if __name__ == "__main__":
 
 # txt = open(file="data/aclImdb/test/pos/6326_8.txt").read()
 # print(txt)
-
-# reviews_train = load_files("aclImdb/train/")
-# text_train, y_train = reviews_train.data, reviews_train.target
-#
-# print("Number of documents in train data: {}".format(len(text_train)))
-# print("Samples per class (train): {}".format(np.bincount(y_train)))
-
-# reviews_test = load_files("aclImdb/test/")
-# text_test, y_test = reviews_test.data, reviews_test.target
-#
-# print("Number of documents in test data: {}".format(len(text_test)))
-# print("Samples per class (test): {}".format(np.bincount(y_test)))

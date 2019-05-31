@@ -8,3 +8,5 @@ venv/
 testing/
 
 __pycache__/
+
+*.model
