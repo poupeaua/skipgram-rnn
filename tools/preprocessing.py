@@ -20,11 +20,11 @@ env = yaml.load(open(os.path.join(skipgram_rnn_path, "env.yml"), 'r'), Loader=Lo
 
 NB_REVIEWS = 50000
 PROJECT_PATH = env["project_abspath"]
-PATHS_DATA = [PROJECT_PATH+"data/aclImdb/test/pos",
-             PROJECT_PATH+"data/aclImdb/test/neg",
-             PROJECT_PATH+"data/aclImdb/train/pos",
-             PROJECT_PATH+"data/aclImdb/train/neg"]
-PATH_STORE_REVIEWS_AS_ARRAYS = PROJECT_PATH+"data/reviews_as_arrays/"
+PATHS_DATA = [os.path.join(PROJECT_PATH, "data/aclImdb/test/pos"),
+             os.path.join(PROJECT_PATH, "data/aclImdb/test/neg"),
+             os.path.join(PROJECT_PATH, "data/aclImdb/train/pos"),
+             os.path.join(PROJECT_PATH, "data/aclImdb/train/neg")]
+PATH_STORE_REVIEWS_AS_ARRAYS = os.path.join(PROJECT_PATH, "data/reviews_as_arrays/")
 DEFAULT_STORE_FILENAME = "test.npy" # reviews_as_arrays.npy
 
 # ----------------------------------------------------------------------------
@@ -39,6 +39,8 @@ def sentence_preprocess():
 
 def iterReviewsFile(paths=PATHS_DATA):
     """
+        Iterate over all the paths to reviews file.
+
         Arguments:
             paths (list) : list of paths to find all the reviews .txt files.
 
