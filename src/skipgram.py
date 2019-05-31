@@ -13,9 +13,7 @@ abspath_file = os.path.abspath(os.path.dirname(__file__))
 skipgram_rnn_path = "/".join(abspath_file.split("/")[:-1])
 sys.path.append(skipgram_rnn_path)
 
-from tools.preprocessing import load_reviews_npy
-
-from tools.preprocessing import iter_reviews_file
+from tools.preprocessing import iter_reviews_file, subsample
 
 # get environnement info
 env = yaml.load(open(os.path.join(skipgram_rnn_path, "env.yml"), 'r'), Loader=Loader)
@@ -33,12 +31,14 @@ env = yaml.load(open(os.path.join(skipgram_rnn_path, "env.yml"), 'r'), Loader=Lo
 
 NB_REVIEWS = 50000
 PROJECT_PATH = env["project_abspath"]
-print(PROJECT_PATH)
+
 # model config
 DEFAULT_SKIPGRAM_STORE_MODEL_PATH = os.path.join(PROJECT_PATH, "models/skipgram/")
 PATH_TO_QUESTIONS_WORDS_FILE = os.path.join(DEFAULT_SKIPGRAM_STORE_MODEL_PATH, "questions-words.txt")
 DEFAULT_SKIPGRAM_MODEL_NAME = "model_test"
 SKIPGRAM_MODEL_CONFIG_FILE = "config.yml"
+
+VOCABULARY_DICT_PATH = ""
 
 
 #  ----------------------------------------------------------------------------
@@ -46,15 +46,21 @@ SKIPGRAM_MODEL_CONFIG_FILE = "config.yml"
 
 # class to create memory-friendly iterator over reviews
 class MyReviews(object):
-    def __init__(self, nb_reviews):
+    def __init__(self, nb_reviews, subsampling, threshold):
         self.nb_reviews = nb_reviews
+        self.subsampling = subsampling
+        self.vocabulary_dict = yaml.load(stream=VOCABULARY_DICT_PATH, Loader=Loader)
+        self.threshold = threshold
 
     def __iter__(self):
         for i, filepath in enumerate(iter_reviews_file()):
             with open(file=filepath) as f:
                 for line in f:
                     # do some pre-processing and return a list of words for each review text
-                    yield gensim.utils.simple_preprocess(line)
+                    tokenized_review = gensim.utils.simple_preprocess(line)
+                    if self.subsampling:
+                        tokenized_review = subsample(tokenized_review, self.vocabulary_dict, self.threshold)
+                    yield tokenized_review
             if i >= self.nb_reviews - 1:
                 break
 
