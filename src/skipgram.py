@@ -12,7 +12,7 @@ abspath_file = os.path.abspath(os.path.dirname(__file__))
 skipgram_rnn_path = "/".join(abspath_file.split("/")[:-1])
 sys.path.append(skipgram_rnn_path)
 
-from tools.preprocessing import loadReviewsNpy
+from tools.preprocessing import load_reviews_npy
 
 # API :
 # https://radimrehurek.com/gensim/models/base_any2vec.html#gensim.models.base_any2vec.BaseWordEmbeddingsModel
@@ -75,7 +75,7 @@ def skipgram(init,
 
     # train
     if train:
-        s = loadReviewsNpy()
+        s = load_reviews_npy()
         print(s.shape)
         # for i in range(len(s)):
         #     s[i] = list(s[i])

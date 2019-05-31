@@ -20,18 +20,18 @@ PATHS_DATA = [PROJECT_DIR + "data\\aclImdb\\test\\pos",
 
 PATH_STORE_REVIEWS_AS_ARRAYS = PROJECT_DIR + "data\\reviews_as_arrays\\"
 
-DEFAULT_STORE_FILENAME = "test.npy" # reviews_as_arrays.npy
+DEFAULT_STORE_FILENAME = "test.npy"  # reviews_as_arrays.npy
 
 
 # ----------------------------------------------------------------------------
 
 
 def sentence_preprocess():
-    ## TODO:
-    return
+    # TODO:
+    pass
 
 
-def iterReviewsFile(paths=PATHS_DATA):
+def iter_reviews_file(paths=PATHS_DATA):
     """
         Arguments:
             paths (list) : list of paths to find all the reviews .txt files.
@@ -44,7 +44,7 @@ def iterReviewsFile(paths=PATHS_DATA):
             yield os.path.join(path, file)
 
 
-def readReviews(nb_files, disp_info_iter=1000):
+def read_reviews(nb_files, disp_info_iter=1000):
     """
         This method reads the .txt files in path.
 
@@ -60,7 +60,7 @@ def readReviews(nb_files, disp_info_iter=1000):
     logging.info("reading reviews...this may take a while")
 
     stock = list()
-    for i, filepath in enumerate(iterReviewsFile()):
+    for i, filepath in enumerate(iter_reviews_file()):
         if (i % disp_info_iter) == 0:
             logging.info("read {0} reviews".format(i))
         with open(file=filepath) as f:
@@ -75,9 +75,9 @@ def readReviews(nb_files, disp_info_iter=1000):
     return np.array(stock)
 
 
-def saveReviewsNpy(nb_files=NB_REVIEWS,
-                   path=PATH_STORE_REVIEWS_AS_ARRAYS,
-                   file_name=DEFAULT_STORE_FILENAME):
+def save_reviews_npy(nb_files=NB_REVIEWS,
+                     path=PATH_STORE_REVIEWS_AS_ARRAYS,
+                     file_name=DEFAULT_STORE_FILENAME):
     """
         Does not return anything but save the array in a file.
 
@@ -89,12 +89,12 @@ def saveReviewsNpy(nb_files=NB_REVIEWS,
     # read the tokenized reviews into a list
     # each review item becomes a series of words
     # so this becomes a list of lists
-    reviews_as_arrays = readReviews(nb_files=nb_files)
+    reviews_as_arrays = read_reviews(nb_files=nb_files)
     np.save(file=os.path.join(path, file_name), arr=reviews_as_arrays)
 
 
-def loadReviewsNpy(path=PATH_STORE_REVIEWS_AS_ARRAYS,
-                   file_name=DEFAULT_STORE_FILENAME):
+def load_reviews_npy(path=PATH_STORE_REVIEWS_AS_ARRAYS,
+                     file_name=DEFAULT_STORE_FILENAME):
     """
         Arguments
             path (str) : path to look for the array file .npy.
@@ -110,21 +110,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    saveReviewsNpy(nb_files=args.nf, file_name=args.file_name)
-    test = loadReviewsNpy(file_name=args.file_name)
+    save_reviews_npy(nb_files=args.nf, file_name=args.file_name)
+    test = load_reviews_npy(file_name=args.file_name)
     print(test)
-
-# txt = open(file="data/aclImdb/test/pos/6326_8.txt").read()
-# print(txt)
-
-# reviews_train = load_files("aclImdb/train/")
-# text_train, y_train = reviews_train.data, reviews_train.target
-#
-# print("Number of documents in train data: {}".format(len(text_train)))
-# print("Samples per class (train): {}".format(np.bincount(y_train)))
-
-# reviews_test = load_files("aclImdb/test/")
-# text_test, y_test = reviews_test.data, reviews_test.target
-#
-# print("Number of documents in test data: {}".format(len(text_test)))
-# print("Samples per class (test): {}".format(np.bincount(y_test)))
