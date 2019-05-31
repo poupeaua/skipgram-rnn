@@ -4,5 +4,5 @@ env.yml
 # Pycharm
 .idea/
 venv/
-
+__pycache__/
 testing/
