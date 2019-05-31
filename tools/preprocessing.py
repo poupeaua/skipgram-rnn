@@ -3,22 +3,28 @@ import gensim
 import numpy as np
 import logging
 import os
+import sys
 import argparse
+import yaml
+from yaml import Loader
 
-logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
+# allows import from skipgram-rnn directory
+abspath_file = os.path.abspath(os.path.dirname(__file__))
+skipgram_rnn_path = "/".join(abspath_file.split("/")[:-1])
+sys.path.append(skipgram_rnn_path)
 
+env = yaml.load(open(os.path.join(skipgram_rnn_path, "env.yml"), 'r'), Loader=Loader)
 # ---------------------------------------------------------------------------
 
 NB_REVIEWS = 50000
 
-PROJECT_DIR = 'C:\\Users\\XOF\\PycharmProjects\\SkipGram-RNN\\'
+PROJECT_PATH = env["project_abspath"]
 
-PATHS_DATA = [PROJECT_DIR + "data\\aclImdb\\test\\pos",
-              PROJECT_DIR + "data\\aclImdb\\test\\neg",
-              PROJECT_DIR + "data\\aclImdb\\train\\pos",
-              PROJECT_DIR + "data\\aclImdb\\train\\neg"]
-
-PATH_STORE_REVIEWS_AS_ARRAYS = PROJECT_DIR + "data\\reviews_as_arrays\\"
+PATHS_DATA = [PROJECT_PATH + "data/aclImdb/test/pos",
+              PROJECT_PATH + "data/aclImdb/test/neg",
+              PROJECT_PATH + "data/aclImdb/train/pos",
+              PROJECT_PATH + "data/aclImdb/train/neg"]
+PATH_STORE_REVIEWS_AS_ARRAYS = PROJECT_PATH + "data/reviews_as_arrays/"
 
 DEFAULT_STORE_FILENAME = "test.npy"  # reviews_as_arrays.npy
 
@@ -50,12 +56,13 @@ def read_reviews(nb_files, disp_info_iter=1000):
 
         Arguments:
             nb_files (int) : number of review files to read.
-            disp_info_iter (int) :
+            disp_info_iter (int) : display information every disp info iter.
 
         Returns:
             stock (array) : array that contains lists of words.
                 One list for each review.
     """
+    logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
     logging.info("reading reviews...this may take a while")
 

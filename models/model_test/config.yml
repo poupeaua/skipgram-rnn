@@ -4,3 +4,4 @@ window: 2
 hs: 0
 negative: 5
 min_count: 1
+workers: 8
