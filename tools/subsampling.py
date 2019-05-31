@@ -1,4 +1,4 @@
-from preprocessing import load_reviews_npy, PROJECT_DIR
+from preprocessing import load_reviews_npy, PROJECT_DIR,
 import random
 import numpy as np
 
@@ -21,8 +21,8 @@ def parse_vocabulary_as_dict(v_path):
     return vocabulary
 
 
-def count_words_in_review(review_arr, vocabulary_dict):
-    for word in review_arr:
+def count_words_in_review(vocabulary_dict):
+    :
         if word in vocabulary_dict:
             vocabulary_dict[word] += 1
         # else:
