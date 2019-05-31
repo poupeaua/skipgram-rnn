@@ -6,12 +6,15 @@ import sys
 import argparse
 import yaml
 from yaml import Loader
+import numpy as np
 import keras
 from keras.preprocessing import sequence
-from keras.models import Sequential
+from keras.models import Sequential, load_model
 from keras.layers import Dense, Embedding
 from keras.layers import LSTM
 from keras.datasets import imdb
+import progressbar as pb
+from progressbar import ProgressBar
 
 # allows import from skipgram-rnn directory
 abspath_file = os.path.abspath(os.path.dirname(__file__))
@@ -32,25 +35,51 @@ MAX_LENGTH_PREPROCESS_REVIEW = 5000
 PROJECT_PATH = env["project_abspath"]
 
 # rnn model default config
-DEFAULT_STORE_RNN_MODEL_PATH = os.path.join(PROJECT_PATH, "/models/rnn")
+DEFAULT_RNN_STORE_MODEL_PATH = os.path.join(PROJECT_PATH, "models/rnn")
 DEFAULT_RNN_MODEL_NAME = "model_test"
-MODEL_CONFIG_FILE = "config.yml"
 
 # skipgram default config
 DEFAULT_SKIPGRAM_STORE_MODEL_PATH = os.path.join(PROJECT_PATH, "models/skipgram/")
-PATH_TO_QUESTIONS_WORDS_FILE = os.path.join(DEFAULT_STORE_MODEL_PATH, "questions-words.txt")
 DEFAULT_SKIPGRAM_MODEL_NAME = "model_test"
 SKIPGRAM_MODEL_CONFIG_FILE = "config.yml"
 
+PATHS_TRAIN_DATA = [os.path.join(PROJECT_PATH, "data/aclImdb/train/pos"),
+                      os.path.join(PROJECT_PATH, "data/aclImdb/train/neg")]
+PATHS_TEST_DATA = [os.path.join(PROJECT_PATH, "data/aclImdb/test/pos"),
+                      os.path.join(PROJECT_PATH, "data/aclImdb/test/neg")]
+
 #  ----------------------------------------------------------------------------
 
+def iter_reviews_as_model_inout(words_embeddings, paths, min_nb_words_reviews=None):
+    for i, review_path in enumerate(iter_reviews_file(paths=paths)):
+        label = int(review_path[-5])
+        if label >= 7:
+            label = 1
+        else:
+            label = 0
+        with open(file=review_path) as f:
+            # do some pre-processing and return a list of words for each review text
+            tokenized_review = gensim.utils.simple_preprocess(f.read())
+        # only take reviews with a minimum number of words
+        if min_nb_words_reviews is None or len(tokenized_review) >= min_nb_words_reviews:
+            for i, word in enumerate(tokenized_review):
+                tokenized_review[i] = words_embeddings[word]
+            tokenized_review = np.array(tokenized_review)
+            yield review_path, tokenized_review, label
 
+
+# 82% classic embedding
+# 22861 reviews with >= 80 words
 def rnn(rnn_model_path,
         rnn_model_name,
+        sg_model_path,
+        sg_model_name,
+        sg_model_config,
         init,
         train,
         load,
-        test):
+        test,
+        epochs):
     """
         Arguments:
             init (bool) :
@@ -58,26 +87,20 @@ def rnn(rnn_model_path,
             load (bool) :
             test (bool) :
     """
-    max_features = 20000
-    # cut texts after this number of words (among top max_features most common words)
-    maxlen = 80
-    batch_size = 32
+    # allows display info
+    # logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
-    print('Loading data...')
-    (x_train, y_train), (x_test, y_test) = imdb.load_data(num_words=max_features)
-    print(len(x_train), 'train sequences')
-    print(len(x_test), 'test sequences')
+    path_to_rnn_model_file = os.path.join(rnn_model_path, rnn_model_name, rnn_model_name+".h5")
+    path_to_sg_model_kv_file = os.path.join(sg_model_path, sg_model_name, sg_model_name+".kv")
 
-    print('Pad sequences (samples x time)')
-    x_train = sequence.pad_sequences(x_train, maxlen=maxlen)
-    x_test = sequence.pad_sequences(x_test, maxlen=maxlen)
-    print('x_train shape:', x_train.shape)
-    print('x_test shape:', x_test.shape)
+    words_embeddings = gensim.models.KeyedVectors.load(path_to_sg_model_kv_file, mmap="r")
+    embeddings_size = sg_model_config["size"]
+    min_nb_words_reviews = 80
+
 
     print('Build model...')
     model = Sequential()
-    model.add(Embedding(max_features, 128))
-    model.add(LSTM(128, dropout=0.2, recurrent_dropout=0.2))
+    model.add(LSTM(128, dropout=0.2, recurrent_dropout=0.2, input_shape=(min_nb_words_reviews, embeddings_size)))
     model.add(Dense(1, activation='sigmoid'))
 
     # try using different optimizers and different optimizer configs
@@ -85,12 +108,117 @@ def rnn(rnn_model_path,
                   optimizer='adam',
                   metrics=['accuracy'])
 
-    print('Train...')
-    model.fit(x_train, y_train,
-              batch_size=batch_size,
-              epochs=15,
-              validation_data=(x_test, y_test))
-    score, acc = model.evaluate(x_test, y_test,
-                                batch_size=batch_size)
+    if train:
+        print('Train...')
+        batch_size = 32
+        inputs = list()
+        labels = list()
+        pbar = ProgressBar()
+        for i, info in pbar(enumerate(iter_reviews_as_model_inout(
+                words_embeddings=words_embeddings, paths=PATHS_TRAIN_DATA, min_nb_words_reviews=min_nb_words_reviews))):
+            _, input, label = info
+            hop = i
+        print(hop)
+        #     inputs.append(input[])
+        #     labels.append(label)
+        #     print(np.array(inputs).shape)
+        # inputs = np.array(inputs)
+        # labels = np.array(labels)
+        print(inputs.shape, labels.shape)
+        model.fit(inputs, labels, batch_size=batch_size, epochs=1, verbose=1)
+
+    # score, acc = model.evaluate(x_test, y_test,
+    #                             batch_size=batch_size)
     print('Test score:', score)
     print('Test accuracy:', acc)
+
+    # save
+    # model.save(path_to_rnn_model_file)
+    #
+    # model = load_model(filepath=path_to_rnn_model_file)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-init", action="store_true")
+    parser.add_argument("-load", action="store_true")
+    parser.add_argument("-train", action="store_true")
+    parser.add_argument("-test", action="store_true")
+    parser.add_argument("-sg_model_path", type=str, default=DEFAULT_SKIPGRAM_STORE_MODEL_PATH)
+    parser.add_argument("-sg_model_name", type=str, default=DEFAULT_SKIPGRAM_MODEL_NAME)
+    parser.add_argument("-rnn_model_path", type=str, default=DEFAULT_RNN_STORE_MODEL_PATH)
+    parser.add_argument("-rnn_model_name", type=str, default=DEFAULT_RNN_MODEL_NAME)
+    parser.add_argument("-epochs", type=int, default=1)
+
+    args = parser.parse_args()
+
+    # get model configuration
+    stream = open(os.path.join(args.sg_model_path, args.sg_model_name, SKIPGRAM_MODEL_CONFIG_FILE), 'r')
+    sg_model_config = yaml.load(stream, Loader=Loader)
+
+    # execute rnn
+    rnn(init=args.init,
+        load=args.load,
+        rnn_model_path=args.rnn_model_path,
+        rnn_model_name=args.rnn_model_name,
+        sg_model_path=args.sg_model_path,
+        sg_model_name=args.sg_model_name,
+        sg_model_config=sg_model_config,
+        train=args.train,
+        test=args.test,
+        epochs=args.epochs)
+
+# DYNAMIC RNN with nb_words = None
+# length = np.Infinity
+# widget = pb.Percentage(), ' ', pb.Bar(marker=pb.RotatingMarker()), ' ', pb.ETA()
+# pbar = ProgressBar()
+# for _, input, label in pbar(iter_reviews_as_model_inout(words_embeddings=words_embeddings, paths=PATHS_TRAIN_DATA)):
+#     model.fit(np.array([input]), [label], batch_size=1, epochs=1, verbose=0)
+
+# model = Sequential()
+# model.add(LSTM(32, input_shape = (None, your_input_dim),  return_sequences = False)
+#
+# In this case, each input your network takes have shape of
+# (batch_size, time_steps, your_input_dim) where your_input_dim is the
+# dimension of your input at each time step, time_steps is the length of the
+# sequence and batch_size is the number of sequences in each batch.
+# If you use batch_size = 1, i.e., you feed only one sequence at a time,
+# then each sequence can have any length. If you use batch_size > 1,
+# then those sequences in that batch must be padded to have the same length
+
+# max_features = 20000
+# # cut texts after this number of words (among top max_features most common words)
+# maxlen = 200
+# batch_size = 32
+#
+# print('Loading data...')
+# (x_train, y_train), (x_test, y_test) = imdb.load_data(num_words=max_features)
+# print(len(x_train), 'train sequences')
+# print(len(x_test), 'test sequences')
+#
+# print('Pad sequences (samples x time)')
+# x_train = sequence.pad_sequences(x_train, maxlen=maxlen)
+# x_test = sequence.pad_sequences(x_test, maxlen=maxlen)
+# print('x_train shape:', x_train.shape)
+# print('x_test shape:', x_test.shape)
+#
+# print('Build model...')
+# model = Sequential()
+# model.add(Embedding(max_features, 128))
+# model.add(LSTM(128, dropout=0.2, recurrent_dropout=0.2))
+# model.add(Dense(1, activation='sigmoid'))
+#
+# # try using different optimizers and different optimizer configs
+# model.compile(loss='binary_crossentropy',
+#               optimizer='adam',
+#               metrics=['accuracy'])
+#
+# print('Train...')
+# model.fit(x_train, y_train,
+#           batch_size=batch_size,
+#           epochs=epochs,
+#           validation_data=(x_test, y_test))
+# score, acc = model.evaluate(x_test, y_test,
+#                             batch_size=batch_size)
+# print('Test score:', score)
+# print('Test accuracy:', acc)

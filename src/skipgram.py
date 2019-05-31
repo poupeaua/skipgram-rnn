@@ -47,21 +47,15 @@ VOCABULARY_DICT_PATH = ""
 
 # class to create memory-friendly iterator over reviews
 class MyReviews(object):
-    def __init__(self, nb_reviews, subsampling, threshold):
+    def __init__(self, nb_reviews):
         self.nb_reviews = nb_reviews
-        self.subsampling = subsampling
-        self.vocabulary_dict = yaml.load(stream=VOCABULARY_DICT_PATH, Loader=Loader)
-        self.threshold = threshold
 
     def __iter__(self):
         for i, filepath in enumerate(iter_reviews_file()):
             with open(file=filepath) as f:
-                for line in f:
-                    # do some pre-processing and return a list of words for each review text
-                    tokenized_review = gensim.utils.simple_preprocess(line)
-                    if self.subsampling:
-                        tokenized_review = subsample(tokenized_review, self.vocabulary_dict, self.threshold)
-                    yield tokenized_review
+                # do some pre-processing and return a list of words for each review text
+                tokenized_review = gensim.utils.simple_preprocess(f.read())
+                yield tokenized_review
             if i >= self.nb_reviews - 1:
                 break
 
@@ -71,7 +65,7 @@ def skipgram(init,
              sg_model_path,
              sg_model_name,
              save_kv,
-             model_config,
+             sg_model_config,
              train,
              epochs,
              similarity,
@@ -86,7 +80,7 @@ def skipgram(init,
             sg_model_path (str) : path to the skipgram models directory
             sg_model_name (str) : name of the skipgram model we want to use
             save_kv (bool) : save embeddings in a file .kv format in
-            model_config (dict) : configuration of the model
+            sg_model_config (dict) : configuration of the skipgram model
             train (bool) : active training
             epochs (int) : number of epochs for training
             similarity (str) : display ten words most similar to this word
@@ -107,14 +101,17 @@ def skipgram(init,
     if init and not load:
         # sentences / corpus = None so the model is left uninitialized
         # iter = 1 to make sure to have an uninitialized model
+        # sample = The threshold for configuring which higher-frequency words are randomly downsampled, useful range is (0, 1e-5).
         model = Word2Vec(sentences=sentences,
+                         sg=1,
                          iter=1,
-                         size=model_config["size"],
-                         window=model_config["window"],
-                         min_count=model_config["min_count"],
-                         hs=model_config["hs"],
-                         negative=model_config["negative"],
-                         workers=model_config["workers"])
+                         size=sg_model_config["size"],
+                         window=sg_model_config["window"],
+                         sample=sg_model_config["sample"],
+                         min_count=sg_model_config["min_count"],
+                         hs=sg_model_config["hs"],
+                         negative=sg_model_config["negative"],
+                         workers=sg_model_config["workers"])
 
         # save the model after initialization
         model.save(path_to_model_file)
@@ -165,7 +162,7 @@ if __name__ == "__main__":
 
     # get model configuration
     stream = open(os.path.join(args.sg_model_path, args.sg_model_name, SKIPGRAM_MODEL_CONFIG_FILE), 'r')
-    model_config = yaml.load(stream, Loader=Loader)
+    sg_model_config = yaml.load(stream, Loader=Loader)
 
     # execute skipgram
     skipgram(init=args.init,
@@ -173,7 +170,7 @@ if __name__ == "__main__":
              sg_model_path=args.sg_model_path,
              sg_model_name=args.sg_model_name,
              save_kv=args.save_kv,
-             model_config=model_config,
+             sg_model_config=sg_model_config,
              train=args.train,
              epochs=args.epochs,
              similarity=args.similarity,

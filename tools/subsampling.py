@@ -82,7 +82,7 @@ def store_subsampling_vocabulary(vocabulary_dict, saving_path):
     return longest_review, max_length
 
 
-def discount_prob(word, vocabulary, t=1e-5):
+def discount_prob(word, vocabulary, threshold=1e-5):
     """
     Compute the probability for the word to be discarded.
 
@@ -103,11 +103,11 @@ def discount_prob(word, vocabulary, t=1e-5):
     return p
 
 
-def subsample(tokenized_review, vocabulary):
+def subsample(tokenized_review, vocabulary, threshold=1e-5):
     j = len(tokenized_review) - 1
     while j >= 0:
         word = tokenized_review[j]
-        if random.random() <= discount_prob(word, vocabulary):
+        if random.random() <= discount_prob(word, vocabulary, threshold):
             tokenized_review.pop(j)
         j -= 1
     return tokenized_review
