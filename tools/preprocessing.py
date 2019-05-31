@@ -20,7 +20,7 @@ PATHS_DATA = [PROJECT_DIR + "data\\aclImdb\\test\\pos",
 
 PATH_STORE_REVIEWS_AS_ARRAYS = PROJECT_DIR + "data\\reviews_as_arrays\\"
 
-DEFAULT_STORE_FILENAME = "reviews_as_arrays.npy"
+DEFAULT_STORE_FILENAME = "test.npy" # reviews_as_arrays.npy
 
 
 # ----------------------------------------------------------------------------
@@ -112,6 +112,7 @@ if __name__ == "__main__":
 
     saveReviewsNpy(nb_files=args.nf, file_name=args.file_name)
     test = loadReviewsNpy(file_name=args.file_name)
+    print(test)
 
 # txt = open(file="data/aclImdb/test/pos/6326_8.txt").read()
 # print(txt)
