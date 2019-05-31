@@ -1,17 +1,39 @@
-from preprocessing import load_reviews_npy, PROJECT_DIR,
+import os
+import sys
 import random
+
+import gensim
 import numpy as np
+import yaml
 
-file_path = PROJECT_DIR + 'data\\reviews_as_arrays\\test10.npy'
+from preprocessing import iter_reviews_file
 
-test = load_reviews_npy(file_name=file_path)
+# allows import from skipgram-rnn directory
+abspath_file = os.path.abspath(os.path.dirname(__file__))
+skipgram_rnn_path = "/".join(abspath_file.split("/")[:-1])
+sys.path.append(skipgram_rnn_path)
 
-vocabulary_path = PROJECT_DIR + 'data\\aclImdb\\imdb.vocab'
+env = yaml.load(open(os.path.join(skipgram_rnn_path, "env.yml"), 'r'), Loader=yaml.Loader)
+
+PROJECT_PATH = env["project_abspath"]
+
+file_path = PROJECT_PATH + 'data/reviews_as_arrays/test10.npy'
+
+vocabulary_path = PROJECT_PATH + 'data/aclImdb/imdb.vocab'
 
 SPECIAL_CHARS = "!@#$%^&*()[]{};:,./<>?|`~-=_+\n\t\\"
 
 
 def parse_vocabulary_as_dict(v_path):
+    """
+    Parse a .vocab txt file and converts it to a python dictionary
+
+    Arguments:
+        v_path (str) : the path of the .vocab file that contains the vocabulary
+
+    Return:
+        vocabulary (dict) : the dictionary that contains all the words in the vocab.
+    """
     vocabulary = dict()
     with open(v_path, 'r', encoding='utf-8', ) as words:
         for w in words:
@@ -21,46 +43,68 @@ def parse_vocabulary_as_dict(v_path):
     return vocabulary
 
 
-def count_words_in_review(vocabulary_dict):
-    :
-        if word in vocabulary_dict:
-            vocabulary_dict[word] += 1
-        # else:
-        #     print(word)
+def count_words(vocabulary_dict):
+    """
+    Update the frequency of every word in vocabulary_dict based on the imdb reviews, and returns the longest review.
+
+    Arguments:
+        vocabulary_dict (dict) : the dictionary that contains all the words in the vocab.
+
+    Return:
+        longest_review (str) : the longest review's path
+        max_length (int) : the length of the longest review
+    """
+    words_counter = 0
+    max_length = 0
+    longest_review = ''
+    for review_path in iter_reviews_file():
+        with open(review_path, 'r', encoding='utf-8') as review:
+            current_max_length = 0
+            for line in review:
+                l = gensim.utils.simple_preprocess(line)
+                for word in l:
+                    current_max_length += 1
+                    words_counter += 1
+                    if word in vocabulary_dict:
+                        vocabulary_dict[word] += 1
+                    else:
+                        vocabulary_dict[word] = 0
+            if current_max_length > max_length:
+                max_length = current_max_length
+                longest_review = review_path
+
+    for w in vocabulary_dict:
+        vocabulary_dict[w] /= words_counter
+
+    return longest_review, max_length
 
 
-def discount_prob(word_str, v_dict, v_len, t=1e-5):
-    q = 0
-    if word_str in v_dict:
-        if v_dict[word_str] > 0:
-            f_w = v_dict[word_str] / v_len
+def discount_prob(word, vocabulary, t=1e-5):
+    """
+    Compute the probability for the word to be discarded.
+
+    Arguments:
+        word (str) : the word which is going to be discarded.
+        vocabulary (dict) : the dictionary containing the vocabulary.
+
+    Return:
+        p (float) : the discard word probability
+    """
+
+    q = 1
+    if word in vocabulary:
+        if vocabulary[word] > 0:
+            f_w = vocabulary[word]
             q = (t / f_w) ** 0.5
-    return 1 - q  # p
+    p = max(0, 1 - q)
+    return p
 
 
-def random_dropout(prob):
-    return random.random() <= prob
-
-
-def subsample(rev, v, v_length):
-    new_rev = []
-    for w in rev:
-        dp = discount_prob(w, v, v_length)
-        if not random_dropout(dp):
-            new_rev.append(w)
-    return np.array(new_rev, dtype="U")
-
-
-if __name__ == '__main__':
-    my_vocabulary = parse_vocabulary_as_dict(v_path=vocabulary_path)
-    for review in test:
-        count_words_in_review(review, my_vocabulary)
-    length = len(my_vocabulary)
-    print(test[0])
-    print("-----------------\n")
-    print(subsample(test[0], my_vocabulary, length))
-    # for i, w in enumerate(test[0]):
-    #     dp = discount_prob(w, my_vocabulary, length)
-    #     print(i, w)
-    #     print(dp)
-    #     print(random_dropout(dp))
+def subsample(tokenized_review, vocabulary):
+    j = len(tokenized_review) - 1
+    while j >= 0:
+        word = tokenized_review[j]
+        if random.random() <= discount_prob(word, vocabulary):
+            tokenized_review.pop(j)
+        j -= 1
+    return tokenized_review
