@@ -1,5 +1,5 @@
 import gensim
-from gensim.models import Word2Vec
+from gensim.models import KeyedVectors
 import logging
 import os
 import sys
@@ -18,7 +18,8 @@ abspath_file = os.path.abspath(os.path.dirname(__file__))
 skipgram_rnn_path = "/".join(abspath_file.split("/")[:-1])
 sys.path.append(skipgram_rnn_path)
 
-from tools.preprocessing import iterReviewsFile
+from tools.preprocessing import iter_reviews_file
+
 
 # get environnement info
 env = yaml.load(open(os.path.join(skipgram_rnn_path, "env.yml"), 'r'), Loader=Loader)

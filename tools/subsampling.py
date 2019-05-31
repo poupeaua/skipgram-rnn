@@ -6,8 +6,6 @@ import gensim
 import numpy as np
 import yaml
 
-from preprocessing import iter_reviews_file
-
 # allows import from skipgram-rnn directory
 abspath_file = os.path.abspath(os.path.dirname(__file__))
 skipgram_rnn_path = "/".join(abspath_file.split("/")[:-1])
@@ -16,6 +14,8 @@ sys.path.append(skipgram_rnn_path)
 env = yaml.load(open(os.path.join(skipgram_rnn_path, "env.yml"), 'r'), Loader=yaml.Loader)
 
 PROJECT_PATH = env["project_abspath"]
+
+from tools.preprocessing import iter_reviews_file
 
 file_path = PROJECT_PATH + 'data/reviews_as_arrays/test10.npy'
 
