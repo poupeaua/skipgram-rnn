@@ -43,7 +43,7 @@ def parse_vocabulary_as_dict(v_path):
     return vocabulary
 
 
-def count_words(vocabulary_dict):
+def store_subsampling_vocabulary(vocabulary_dict, saving_path):
     """
     Update the frequency of every word in vocabulary_dict based on the imdb reviews, and returns the longest review.
 
@@ -75,6 +75,9 @@ def count_words(vocabulary_dict):
 
     for w in vocabulary_dict:
         vocabulary_dict[w] /= words_counter
+
+    with open(saving_path, 'w') as yaml_file:
+        yaml.dump(vocabulary_dict, yaml_file, default_flow_style=False)
 
     return longest_review, max_length
 
