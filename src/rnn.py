@@ -13,8 +13,8 @@ from keras.models import Sequential, load_model
 from keras.layers import Dense, Embedding
 from keras.layers import LSTM
 from keras.datasets import imdb
-import progressbar as pb
-from progressbar import ProgressBar
+import progress
+from progress.bar import Bar
 
 # allows import from skipgram-rnn directory
 abspath_file = os.path.abspath(os.path.dirname(__file__))
@@ -38,8 +38,8 @@ PROJECT_PATH = env["project_abspath"]
 # rnn model default config
 DEFAULT_RNN_STORE_MODEL_PATH = os.path.join(PROJECT_PATH, "models/rnn")
 DEFAULT_RNN_MODEL_NAME = "model_test"
-DEFAULT_TRAINING_SIZE = 250
-DEFAULT_TESTING_SIZE = 100
+DEFAULT_TRAINING_SIZE = 7500
+DEFAULT_TESTING_SIZE = 2500
 
 # skipgram default config
 DEFAULT_SKIPGRAM_STORE_MODEL_PATH = os.path.join(PROJECT_PATH, "models/skipgram/")
@@ -82,9 +82,6 @@ def rnn(rnn_model_path,
     path_to_rnn_model_file = os.path.join(rnn_model_path, rnn_model_name, rnn_model_name+".h5")
     path_to_sg_model_kv_file = os.path.join(sg_model_path, sg_model_name, sg_model_name+".kv")
 
-    # progress bar widget
-    widget = [pb.Percentage(), ' ', pb.Bar(marker=pb.RotatingMarker()), ' ', pb.ETA()]
-
     words_embeddings = gensim.models.KeyedVectors.load(path_to_sg_model_kv_file, mmap="r")
     embeddings_size = sg_model_config["size"]
 
@@ -101,6 +98,7 @@ def rnn(rnn_model_path,
                       metrics=['accuracy'])
 
         # save model after initializing it
+        print("Save model...")
         model.save(path_to_rnn_model_file)
 
     elif load:
@@ -112,26 +110,29 @@ def rnn(rnn_model_path,
 
     if train:
         print('Train...')
+
         training_iterator = iter_reviews_as_model_inout(words_embeddings=words_embeddings,
                                                         paths=PATHS_TRAIN_DATA,
                                                         max_nb_reviews=training_size)
 
         # DYNAMIC RNN with nb_words = None
         for cur_epoch in range(epochs):
-            pbar = ProgressBar(prefix="epochs: "+str(cur_epoch))
+            pbar = Bar('Processing epoch' + str(cur_epoch), max=training_size).iter(training_iterator)
             for input, label in pbar(training_iterator):
                 model.fit(np.array([input]), [label], batch_size=1, epochs=1, verbose=0)
 
         # save model after training
+        print("Save model...")
         model.save(path_to_rnn_model_file)
 
     if test:
-        pbar = ProgressBar()
+        print('Test...')
+        # pbar = pb.progressbar()
         testing_iterator = iter_reviews_as_model_inout(words_embeddings=words_embeddings,
                                                         paths=PATHS_TEST_DATA,
                                                         max_nb_reviews=testing_size)
         confusion_matrix = np.zeros(shape=(2,2))
-        for input, label in pbar(testing_iterator):
+        for input, label in Bar('Processing', max=testing_size).iter(testing_iterator):
             prediction = model.predict_classes(x=np.array([input]))
             confusion_matrix[label, prediction] += 1
         print("Confusion matrix :")
@@ -139,15 +140,17 @@ def rnn(rnn_model_path,
         print('Test accuracy:', np.sum(np.trace(confusion_matrix))/testing_size)
 
     if pred:
-        all_review_paths = list(iter_reviews_file())
+        all_review_paths = list(iter_reviews_file(paths=PATHS_TEST_DATA))
         random_review_path = np.random.choice(all_review_paths)
+        print("Review :", random_review_path)
         with open(file=random_review_path, mode='r') as f:
             print("Random review used for prediction")
             print(f.read())
         input, label = get_inout_from_review(words_embeddings=words_embeddings,
-                                             review_path=review_path)
+                                             review_path=random_review_path)
         print("True label :", label)
-        print("Prediction :", model.predict_proba(x=np.array([input])))
+        print("Prediction label :", model.predict_classes(x=np.array([input]))[0][0])
+        print("Prediction :", model.predict_proba(x=np.array([input]))[0][0])
 
 
 if __name__ == "__main__":

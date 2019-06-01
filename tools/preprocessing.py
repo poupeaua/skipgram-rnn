@@ -65,6 +65,7 @@ def iter_random_reviews_file(paths):
     """
     review_paths = list(iter_reviews_file(paths=paths))
     np.random.shuffle(review_paths)
+    np.random.shuffle(review_paths)
     for review_path in review_paths:
         yield review_path
 
@@ -85,8 +86,11 @@ def get_inout_from_review(review_path, words_embeddings, good_reviews_min_value=
                 representation of each word.
             label (int) : 0 or 1 for a respective bad or good film review
     """
-    label = int(review_path[-5])
-    if label >= good_reviews_min_value:
+    if review_path[-6] == "1":
+        # case of 10
+        label = 1
+    elif review_path[-6] != "1" and int(review_path[-5]) >= good_reviews_min_value:
+        # case of number between 0 and 9
         label = 1
     else:
         label = 0
