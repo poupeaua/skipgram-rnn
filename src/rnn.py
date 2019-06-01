@@ -21,7 +21,8 @@ abspath_file = os.path.abspath(os.path.dirname(__file__))
 skipgram_rnn_path = "/".join(abspath_file.split("/")[:-1])
 sys.path.append(skipgram_rnn_path)
 
-from tools.preprocessing import iter_reviews_file
+from tools.preprocessing import iter_reviews_as_model_inout, \
+                                get_inout_from_review, iter_reviews_file
 
 
 # get environnement info
@@ -37,6 +38,8 @@ PROJECT_PATH = env["project_abspath"]
 # rnn model default config
 DEFAULT_RNN_STORE_MODEL_PATH = os.path.join(PROJECT_PATH, "models/rnn")
 DEFAULT_RNN_MODEL_NAME = "model_test"
+DEFAULT_TRAINING_SIZE = 250
+DEFAULT_TESTING_SIZE = 100
 
 # skipgram default config
 DEFAULT_SKIPGRAM_STORE_MODEL_PATH = os.path.join(PROJECT_PATH, "models/skipgram/")
@@ -50,22 +53,7 @@ PATHS_TEST_DATA = [os.path.join(PROJECT_PATH, "data/aclImdb/test/pos"),
 
 #  ----------------------------------------------------------------------------
 
-def iter_reviews_as_model_inout(words_embeddings, paths, min_nb_words_reviews=None):
-    for i, review_path in enumerate(iter_reviews_file(paths=paths)):
-        label = int(review_path[-5])
-        if label >= 7:
-            label = 1
-        else:
-            label = 0
-        with open(file=review_path) as f:
-            # do some pre-processing and return a list of words for each review text
-            tokenized_review = gensim.utils.simple_preprocess(f.read())
-        # only take reviews with a minimum number of words
-        if min_nb_words_reviews is None or len(tokenized_review) >= min_nb_words_reviews:
-            for i, word in enumerate(tokenized_review):
-                tokenized_review[i] = words_embeddings[word]
-            tokenized_review = np.array(tokenized_review)
-            yield review_path, tokenized_review, label
+
 
 
 # 82% classic embedding
@@ -79,7 +67,10 @@ def rnn(rnn_model_path,
         train,
         load,
         test,
-        epochs):
+        pred,
+        epochs,
+        training_size,
+        testing_size):
     """
         Arguments:
             init (bool) :
@@ -87,55 +78,76 @@ def rnn(rnn_model_path,
             load (bool) :
             test (bool) :
     """
-    # allows display info
-    # logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
-
+    # path used for rnn model loading and saving and skipgram words embeddings
     path_to_rnn_model_file = os.path.join(rnn_model_path, rnn_model_name, rnn_model_name+".h5")
     path_to_sg_model_kv_file = os.path.join(sg_model_path, sg_model_name, sg_model_name+".kv")
 
+    # progress bar widget
+    widget = [pb.Percentage(), ' ', pb.Bar(marker=pb.RotatingMarker()), ' ', pb.ETA()]
+
     words_embeddings = gensim.models.KeyedVectors.load(path_to_sg_model_kv_file, mmap="r")
     embeddings_size = sg_model_config["size"]
-    min_nb_words_reviews = 80
 
+    if init and not load:
+        print('Build model...')
+        model = Sequential()
+        # as the input shape is (None, embeddings_size) => dynamic RNN
+        model.add(LSTM(128, dropout=0.2, recurrent_dropout=0.2, input_shape=(None, embeddings_size)))
+        model.add(Dense(1, activation='sigmoid'))
 
-    print('Build model...')
-    model = Sequential()
-    model.add(LSTM(128, dropout=0.2, recurrent_dropout=0.2, input_shape=(min_nb_words_reviews, embeddings_size)))
-    model.add(Dense(1, activation='sigmoid'))
+        # try using different optimizers and different optimizer configs
+        model.compile(loss='binary_crossentropy',
+                      optimizer='adam',
+                      metrics=['accuracy'])
 
-    # try using different optimizers and different optimizer configs
-    model.compile(loss='binary_crossentropy',
-                  optimizer='adam',
-                  metrics=['accuracy'])
+        # save model after initializing it
+        model.save(path_to_rnn_model_file)
+
+    elif load:
+        # load model from file
+        model = load_model(filepath=path_to_rnn_model_file)
+
+    else:
+        raise RuntimeError("You have either to choose parameter -init or -load")
 
     if train:
         print('Train...')
-        batch_size = 32
-        inputs = list()
-        labels = list()
+        training_iterator = iter_reviews_as_model_inout(words_embeddings=words_embeddings,
+                                                        paths=PATHS_TRAIN_DATA,
+                                                        max_nb_reviews=training_size)
+
+        # DYNAMIC RNN with nb_words = None
+        for cur_epoch in range(epochs):
+            pbar = ProgressBar(prefix="epochs: "+str(cur_epoch))
+            for input, label in pbar(training_iterator):
+                model.fit(np.array([input]), [label], batch_size=1, epochs=1, verbose=0)
+
+        # save model after training
+        model.save(path_to_rnn_model_file)
+
+    if test:
         pbar = ProgressBar()
-        for i, info in pbar(enumerate(iter_reviews_as_model_inout(
-                words_embeddings=words_embeddings, paths=PATHS_TRAIN_DATA, min_nb_words_reviews=min_nb_words_reviews))):
-            _, input, label = info
-            hop = i
-        print(hop)
-        #     inputs.append(input[])
-        #     labels.append(label)
-        #     print(np.array(inputs).shape)
-        # inputs = np.array(inputs)
-        # labels = np.array(labels)
-        print(inputs.shape, labels.shape)
-        model.fit(inputs, labels, batch_size=batch_size, epochs=1, verbose=1)
+        testing_iterator = iter_reviews_as_model_inout(words_embeddings=words_embeddings,
+                                                        paths=PATHS_TEST_DATA,
+                                                        max_nb_reviews=testing_size)
+        confusion_matrix = np.zeros(shape=(2,2))
+        for input, label in pbar(testing_iterator):
+            prediction = model.predict_classes(x=np.array([input]))
+            confusion_matrix[label, prediction] += 1
+        print("Confusion matrix :")
+        print(confusion_matrix)
+        print('Test accuracy:', np.sum(np.trace(confusion_matrix))/testing_size)
 
-    # score, acc = model.evaluate(x_test, y_test,
-    #                             batch_size=batch_size)
-    print('Test score:', score)
-    print('Test accuracy:', acc)
-
-    # save
-    # model.save(path_to_rnn_model_file)
-    #
-    # model = load_model(filepath=path_to_rnn_model_file)
+    if pred:
+        all_review_paths = list(iter_reviews_file())
+        random_review_path = np.random.choice(all_review_paths)
+        with open(file=random_review_path, mode='r') as f:
+            print("Random review used for prediction")
+            print(f.read())
+        input, label = get_inout_from_review(words_embeddings=words_embeddings,
+                                             review_path=review_path)
+        print("True label :", label)
+        print("Prediction :", model.predict_proba(x=np.array([input])))
 
 
 if __name__ == "__main__":
@@ -144,11 +156,14 @@ if __name__ == "__main__":
     parser.add_argument("-load", action="store_true")
     parser.add_argument("-train", action="store_true")
     parser.add_argument("-test", action="store_true")
+    parser.add_argument("-pred", action="store_true")
     parser.add_argument("-sg_model_path", type=str, default=DEFAULT_SKIPGRAM_STORE_MODEL_PATH)
     parser.add_argument("-sg_model_name", type=str, default=DEFAULT_SKIPGRAM_MODEL_NAME)
     parser.add_argument("-rnn_model_path", type=str, default=DEFAULT_RNN_STORE_MODEL_PATH)
     parser.add_argument("-rnn_model_name", type=str, default=DEFAULT_RNN_MODEL_NAME)
     parser.add_argument("-epochs", type=int, default=1)
+    parser.add_argument("-training_size", type=int, default=DEFAULT_TRAINING_SIZE)
+    parser.add_argument("-testing_size", type=int, default=DEFAULT_TESTING_SIZE)
 
     args = parser.parse_args()
 
@@ -166,14 +181,12 @@ if __name__ == "__main__":
         sg_model_config=sg_model_config,
         train=args.train,
         test=args.test,
-        epochs=args.epochs)
+        pred=args.pred,
+        epochs=args.epochs,
+        training_size=args.training_size,
+        testing_size=args.testing_size)
 
-# DYNAMIC RNN with nb_words = None
-# length = np.Infinity
-# widget = pb.Percentage(), ' ', pb.Bar(marker=pb.RotatingMarker()), ' ', pb.ETA()
-# pbar = ProgressBar()
-# for _, input, label in pbar(iter_reviews_as_model_inout(words_embeddings=words_embeddings, paths=PATHS_TRAIN_DATA)):
-#     model.fit(np.array([input]), [label], batch_size=1, epochs=1, verbose=0)
+
 
 # model = Sequential()
 # model.add(LSTM(32, input_shape = (None, your_input_dim),  return_sequences = False)
