@@ -117,8 +117,7 @@ def rnn(rnn_model_path,
 
         # DYNAMIC RNN with nb_words = None
         for cur_epoch in range(epochs):
-            pbar = Bar('Processing epoch' + str(cur_epoch), max=training_size).iter(training_iterator)
-            for input, label in pbar(training_iterator):
+            for input, label in Bar('Processing epoch' + str(cur_epoch), max=training_size).iter(training_iterator):
                 model.fit(np.array([input]), [label], batch_size=1, epochs=1, verbose=0)
 
         # save model after training

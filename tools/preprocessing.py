@@ -65,7 +65,6 @@ def iter_random_reviews_file(paths):
     """
     review_paths = list(iter_reviews_file(paths=paths))
     np.random.shuffle(review_paths)
-    np.random.shuffle(review_paths)
     for review_path in review_paths:
         yield review_path
 
