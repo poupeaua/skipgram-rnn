@@ -4,7 +4,7 @@ Study of the Skipgram model for word embeddings. Then evaluating different distr
 - Skipgram : Word2Vec doc https://radimrehurek.com/gensim/models/word2vec.html
 - Dynamic RNN : Keras doc https://keras.io/layers/recurrent/
 
-# Environnement
+## Environnement
 1 - Download data here http://ai.stanford.edu/~amaas/data/sentiment/ (turn into a directory named *aclImdb/* after decompression).
 Create a directory named *data/* at the project root. Put the directory *aclImdb/* in *data/*.
 
@@ -24,7 +24,7 @@ Structure:
 
 2 - Create a env.yml file at the project root and write in it : project_abspath: "absolute/path/to/skipgram-rnn"
 
-# How to Skipgram ?
+## How to Skipgram ?
 3 - You are ready to train your first Skipgram model ! Create a directory *my_skipgram_model/* in *models/skipgram*. Create a config.yml file in *my_skipgram_model/* and indicate in it the following parameters : size, window, hs, negative, sample, min_count: 1, workers. 
 
 4 - **python3 src/skipgram.py -init -sg_model_name my_skipgram_model** initialize the model and then train it with one epoch. 
@@ -35,7 +35,7 @@ Structure:
 
 7 - **python3 src/skipgram.py -load -sg_model_name my_skipgram_model -save_kv** store your keyed vectors or word embeddings in a *models/skipgram/my_skipgram_model/my_skipgram_model.kv*.
 
-# How to Dynamic RNN ?
+## How to Dynamic RNN ?
 
 8 - You are ready to train your first RNN model ! Create a directory *my_rnn_model/* in *models/rnn*.
 
@@ -47,4 +47,4 @@ Structure:
 
 12 - **python3 src/rnn.py -load -rnn_model_name my_rnn_model -sg_model_name my_skipgram_model -pred** take a random test review, display it and print its ground truth class, the predicted class and the probability of being a good review.
 
-Now just have fun !
+Have fun !
