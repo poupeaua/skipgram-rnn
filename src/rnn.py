@@ -22,12 +22,10 @@ skipgram_rnn_path = "/".join(abspath_file.split("/")[:-1])
 sys.path.append(skipgram_rnn_path)
 
 from tools.preprocessing import iter_reviews_as_model_inout, \
-                                get_inout_from_review, iter_reviews_file
-
+    get_inout_from_review, iter_reviews_file
 
 # get environnement info
 env = yaml.load(open(os.path.join(skipgram_rnn_path, "env.yml"), 'r'), Loader=Loader)
-
 
 # ----------------------------------------------------------------------------
 
@@ -47,13 +45,12 @@ DEFAULT_SKIPGRAM_MODEL_NAME = "model_test"
 SKIPGRAM_MODEL_CONFIG_FILE = "config.yml"
 
 PATHS_TRAIN_DATA = [os.path.join(PROJECT_PATH, "data/aclImdb/train/pos"),
-                      os.path.join(PROJECT_PATH, "data/aclImdb/train/neg")]
+                    os.path.join(PROJECT_PATH, "data/aclImdb/train/neg")]
 PATHS_TEST_DATA = [os.path.join(PROJECT_PATH, "data/aclImdb/test/pos"),
-                      os.path.join(PROJECT_PATH, "data/aclImdb/test/neg")]
+                   os.path.join(PROJECT_PATH, "data/aclImdb/test/neg")]
+
 
 #  ----------------------------------------------------------------------------
-
-
 
 
 # 82% classic embedding
@@ -79,8 +76,8 @@ def rnn(rnn_model_path,
             test (bool) :
     """
     # path used for rnn model loading and saving and skipgram words embeddings
-    path_to_rnn_model_file = os.path.join(rnn_model_path, rnn_model_name, rnn_model_name+".h5")
-    path_to_sg_model_kv_file = os.path.join(sg_model_path, sg_model_name, sg_model_name+".kv")
+    path_to_rnn_model_file = os.path.join(rnn_model_path, rnn_model_name, rnn_model_name + ".h5")
+    path_to_sg_model_kv_file = os.path.join(sg_model_path, sg_model_name, sg_model_name + ".kv")
 
     words_embeddings = gensim.models.KeyedVectors.load(path_to_sg_model_kv_file, mmap="r")
     embeddings_size = sg_model_config["size"]
@@ -128,15 +125,15 @@ def rnn(rnn_model_path,
         print('Test...')
         # pbar = pb.progressbar()
         testing_iterator = iter_reviews_as_model_inout(words_embeddings=words_embeddings,
-                                                        paths=PATHS_TEST_DATA,
-                                                        max_nb_reviews=testing_size)
-        confusion_matrix = np.zeros(shape=(2,2))
+                                                       paths=PATHS_TEST_DATA,
+                                                       max_nb_reviews=testing_size)
+        confusion_matrix = np.zeros(shape=(2, 2))
         for input, label in Bar('Processing', max=testing_size).iter(testing_iterator):
             prediction = model.predict_classes(x=np.array([input]))
             confusion_matrix[label, prediction] += 1
         print("Confusion matrix :")
         print(confusion_matrix)
-        print('Test accuracy:', np.sum(np.trace(confusion_matrix))/testing_size)
+        print('Test accuracy:', np.sum(np.trace(confusion_matrix)) / testing_size)
 
     if pred:
         all_review_paths = list(iter_reviews_file(paths=PATHS_TEST_DATA))
@@ -187,8 +184,6 @@ if __name__ == "__main__":
         epochs=args.epochs,
         training_size=args.training_size,
         testing_size=args.testing_size)
-
-
 
 # model = Sequential()
 # model.add(LSTM(32, input_shape = (None, your_input_dim),  return_sequences = False)

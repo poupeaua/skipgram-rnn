@@ -112,7 +112,7 @@ def iter_reviews_as_model_inout(words_embeddings,
         Arguments:
             words_embeddings (dict) : KeyedVectors object.
                 It allows to associate a vector to a word.
-            paths (str) : paths to reviews to consider.
+            paths (list) : list of paths to reviews to consider.
             max_nb_reviews (int) : maximum number of review to iterate.
             good_reviews_min_value (int) : threshold between good and bad review
 
