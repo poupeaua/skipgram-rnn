@@ -52,7 +52,7 @@ class MyReviews(object):
 
     def __iter__(self):
         for i, filepath in enumerate(iter_reviews_file()):
-            with open(file=filepath) as f:
+            with open(file=filepath, encoding='utf-8') as f:
                 # do some pre-processing and return a list of words for each review text
                 tokenized_review = gensim.utils.simple_preprocess(f.read())
                 yield tokenized_review
