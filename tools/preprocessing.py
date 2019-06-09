@@ -26,8 +26,6 @@ PATHS_TEST_DATA = [os.path.join(PROJECT_PATH, "data/aclImdb/test/pos"),
 PATHS_DATA = PATHS_TRAIN_DATA + PATHS_TEST_DATA
 PATH_STORE_REVIEWS_AS_ARRAYS = os.path.join(PROJECT_PATH, "data/reviews_as_arrays/")
 DEFAULT_STORE_FILENAME = "test.npy"  # reviews_as_arrays.npy
-
-
 # ----------------------------------------------------------------------------
 
 
@@ -93,7 +91,7 @@ def get_inout_from_review(review_path, words_embeddings, good_reviews_min_value=
         label = 1
     else:
         label = 0
-    with open(file=review_path) as f:
+    with open(file=review_path, encoding='utf-8') as f:
         # do some pre-processing and return a list of words for each review text
         tokenized_review = gensim.utils.simple_preprocess(f.read())
     for j, word in enumerate(tokenized_review):

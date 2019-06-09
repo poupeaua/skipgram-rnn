@@ -12,6 +12,8 @@ from keras.preprocessing import sequence
 from keras.models import Sequential, load_model
 from keras.layers import Dense, Embedding
 from keras.layers import LSTM
+from keras.layers import CuDNNLSTM
+from keras.layers import Dropout
 from keras.datasets import imdb
 import progress
 from progress.bar import Bar
@@ -36,8 +38,8 @@ PROJECT_PATH = env["project_abspath"]
 # rnn model default config
 DEFAULT_RNN_STORE_MODEL_PATH = os.path.join(PROJECT_PATH, "models/rnn")
 DEFAULT_RNN_MODEL_NAME = "model_test"
-DEFAULT_TRAINING_SIZE = 7500
-DEFAULT_TESTING_SIZE = 2500
+DEFAULT_TRAINING_SIZE = 25000
+DEFAULT_TESTING_SIZE = 25000
 
 # skipgram default config
 DEFAULT_SKIPGRAM_STORE_MODEL_PATH = os.path.join(PROJECT_PATH, "models/skipgram/")
@@ -86,7 +88,8 @@ def rnn(rnn_model_path,
         print('Build model...')
         model = Sequential()
         # as the input shape is (None, embeddings_size) => dynamic RNN
-        model.add(LSTM(128, dropout=0.2, recurrent_dropout=0.2, input_shape=(None, embeddings_size)))
+        model.add(CuDNNLSTM(128, input_shape=(None, embeddings_size)))
+        model.add(Dropout(0.2))
         model.add(Dense(1, activation='sigmoid'))
 
         # try using different optimizers and different optimizer configs
