@@ -1,0 +1,8 @@
+# model size 10 window 5
+size: 10
+window: 5
+hs: 0
+negative: 5
+sample: 0.99
+min_count: 1
+workers: 32

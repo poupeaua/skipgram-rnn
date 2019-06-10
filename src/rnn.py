@@ -1,5 +1,4 @@
 import gensim
-from gensim.models import KeyedVectors
 import logging
 import os
 import sys
@@ -14,8 +13,6 @@ from keras.layers import Dense, Embedding
 from keras.layers import LSTM
 from keras.layers import CuDNNLSTM
 from keras.layers import Dropout
-from keras.datasets import imdb
-import progress
 from progress.bar import Bar
 
 # allows import from skipgram-rnn directory

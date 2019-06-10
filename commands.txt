@@ -1,0 +1,31 @@
+python src/rnn.py -init -sg_model_name model_size50_window2 -rnn_model_name model_size50_window2
+python src/rnn.py -init -sg_model_name model_size50_window4 -rnn_model_name model_size50_window4
+python src/rnn.py -init -sg_model_name model_size50_window5 -rnn_model_name model_size50_window5
+python src/rnn.py -init -sg_model_name model_size100_window2 -rnn_model_name model_size100_window2
+python src/rnn.py -init -sg_model_name model_size100_window4 -rnn_model_name model_size100_window4
+python src/rnn.py -init -sg_model_name model_size100_window5 -rnn_model_name model_size100_window5
+python src/rnn.py -init -sg_model_name model_size200_window2 -rnn_model_name model_size200_window2
+python src/rnn.py -init -sg_model_name model_size200_window4 -rnn_model_name model_size200_window4
+python src/rnn.py -init -sg_model_name model_size200_window5 -rnn_model_name model_size200_window5
+
+
+python src/rnn.py -load -train -sg_model_name model_size50_window2 -rnn_model_name model_size50_window2
+python src/rnn.py -load -train -sg_model_name model_size50_window4 -rnn_model_name model_size50_window4
+python src/rnn.py -load -train -sg_model_name model_size50_window5 -rnn_model_name model_size50_window5
+python src/rnn.py -load -train -sg_model_name model_size100_window2 -rnn_model_name model_size100_window2
+python src/rnn.py -load -train -sg_model_name model_size100_window4 -rnn_model_name model_size100_window4
+python src/rnn.py -load -train -sg_model_name model_size100_window5 -rnn_model_name model_size100_window5
+python src/rnn.py -load -train -sg_model_name model_size200_window2 -rnn_model_name model_size200_window2
+python src/rnn.py -load -train -sg_model_name model_size200_window4 -rnn_model_name model_size200_window4
+python src/rnn.py -load -train -sg_model_name model_size200_window5 -rnn_model_name model_size200_window5
+
+
+python src/rnn.py -load -test -sg_model_name model_size50_window2 -rnn_model_name model_size50_window2
+python src/rnn.py -load -test -sg_model_name model_size50_window4 -rnn_model_name model_size50_window4
+python src/rnn.py -load -test -sg_model_name model_size50_window5 -rnn_model_name model_size50_window5
+python src/rnn.py -load -test -sg_model_name model_size100_window2 -rnn_model_name model_size100_window2
+python src/rnn.py -load -test -sg_model_name model_size100_window4 -rnn_model_name model_size100_window4
+python src/rnn.py -load -test -sg_model_name model_size100_window5 -rnn_model_name model_size100_window5
+python src/rnn.py -load -test -sg_model_name model_size200_window2 -rnn_model_name model_size200_window2
+python src/rnn.py -load -test -sg_model_name model_size200_window4 -rnn_model_name model_size200_window4
+python src/rnn.py -load -test -sg_model_name model_size200_window5 -rnn_model_name model_size200_window5
