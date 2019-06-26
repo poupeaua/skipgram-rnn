@@ -11,7 +11,7 @@ import keras
 from keras.preprocessing import sequence
 from keras.models import Sequential, load_model
 from keras.layers import Dense, Embedding
-from keras.layers import LSTM
+from keras.layers import LSTM, CuDNNLSTM
 from keras.datasets import imdb
 import progress
 from progress.bar import Bar
@@ -81,15 +81,16 @@ def rnn(rnn_model_path,
     # path used for rnn model loading and saving and skipgram words embeddings
     path_to_rnn_model_file = os.path.join(rnn_model_path, rnn_model_name, rnn_model_name+".h5")
     path_to_sg_model_kv_file = os.path.join(sg_model_path, sg_model_name, sg_model_name+".kv")
-
     words_embeddings = gensim.models.KeyedVectors.load(path_to_sg_model_kv_file, mmap="r")
     embeddings_size = sg_model_config["size"]
 
     if init and not load:
         print('Build model...')
         model = Sequential()
-        # as the input shape is (None, embeddings_size) => dynamic RNN
+        # as the input shape is (None, embeddings_size) => DYNAMIC RNN
+        # CuDNNLSTM fast version of LSTM (can only be run with GPU)
         model.add(LSTM(128, dropout=0.2, recurrent_dropout=0.2, input_shape=(None, embeddings_size)))
+        # model.add(CuDNNLSTM(128, input_shape=(None, embeddings_size)))
         model.add(Dense(1, activation='sigmoid'))
 
         # try using different optimizers and different optimizer configs
@@ -117,7 +118,7 @@ def rnn(rnn_model_path,
 
         # DYNAMIC RNN with nb_words = None
         for cur_epoch in range(epochs):
-            for input, label in Bar('Processing epoch' + str(cur_epoch), max=training_size).iter(training_iterator):
+            for input, label in Bar('Processing epoch ' + str(cur_epoch), max=training_size).iter(training_iterator):
                 model.fit(np.array([input]), [label], batch_size=1, epochs=1, verbose=0)
 
         # save model after training
@@ -126,7 +127,7 @@ def rnn(rnn_model_path,
 
     if test:
         print('Test...')
-        # pbar = pb.progressbar()
+
         testing_iterator = iter_reviews_as_model_inout(words_embeddings=words_embeddings,
                                                         paths=PATHS_TEST_DATA,
                                                         max_nb_reviews=testing_size)
@@ -187,53 +188,3 @@ if __name__ == "__main__":
         epochs=args.epochs,
         training_size=args.training_size,
         testing_size=args.testing_size)
-
-
-
-# model = Sequential()
-# model.add(LSTM(32, input_shape = (None, your_input_dim),  return_sequences = False)
-#
-# In this case, each input your network takes have shape of
-# (batch_size, time_steps, your_input_dim) where your_input_dim is the
-# dimension of your input at each time step, time_steps is the length of the
-# sequence and batch_size is the number of sequences in each batch.
-# If you use batch_size = 1, i.e., you feed only one sequence at a time,
-# then each sequence can have any length. If you use batch_size > 1,
-# then those sequences in that batch must be padded to have the same length
-
-# max_features = 20000
-# # cut texts after this number of words (among top max_features most common words)
-# maxlen = 200
-# batch_size = 32
-#
-# print('Loading data...')
-# (x_train, y_train), (x_test, y_test) = imdb.load_data(num_words=max_features)
-# print(len(x_train), 'train sequences')
-# print(len(x_test), 'test sequences')
-#
-# print('Pad sequences (samples x time)')
-# x_train = sequence.pad_sequences(x_train, maxlen=maxlen)
-# x_test = sequence.pad_sequences(x_test, maxlen=maxlen)
-# print('x_train shape:', x_train.shape)
-# print('x_test shape:', x_test.shape)
-#
-# print('Build model...')
-# model = Sequential()
-# model.add(Embedding(max_features, 128))
-# model.add(LSTM(128, dropout=0.2, recurrent_dropout=0.2))
-# model.add(Dense(1, activation='sigmoid'))
-#
-# # try using different optimizers and different optimizer configs
-# model.compile(loss='binary_crossentropy',
-#               optimizer='adam',
-#               metrics=['accuracy'])
-#
-# print('Train...')
-# model.fit(x_train, y_train,
-#           batch_size=batch_size,
-#           epochs=epochs,
-#           validation_data=(x_test, y_test))
-# score, acc = model.evaluate(x_test, y_test,
-#                             batch_size=batch_size)
-# print('Test score:', score)
-# print('Test accuracy:', acc)

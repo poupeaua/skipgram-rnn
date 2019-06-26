@@ -1,4 +1,3 @@
-from sklearn.datasets import load_files
 import gensim
 import numpy as np
 import logging
@@ -96,9 +95,12 @@ def get_inout_from_review(review_path, words_embeddings, good_reviews_min_value=
     with open(file=review_path) as f:
         # do some pre-processing and return a list of words for each review text
         tokenized_review = gensim.utils.simple_preprocess(f.read())
-    for j, word in enumerate(tokenized_review):
-        tokenized_review[j] = words_embeddings[word]
-    input = np.array(tokenized_review)
+    stock = list()
+    for word in tokenized_review:
+        if word in words_embeddings.vocab:
+            # make sure the word is in the vocabulary
+            stock.append(words_embeddings[word])
+    input = np.array(stock)
     return input, label
 
 
