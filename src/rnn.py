@@ -1,6 +1,4 @@
 import gensim
-from gensim.models import KeyedVectors
-import logging
 import os
 import sys
 import argparse
@@ -14,6 +12,7 @@ from keras.layers import Dense, Embedding
 from keras.layers import LSTM, CuDNNLSTM
 from keras.datasets import imdb
 import progress
+from keras.layers import Dropout
 from progress.bar import Bar
 
 # allows import from skipgram-rnn directory
@@ -22,12 +21,10 @@ skipgram_rnn_path = "/".join(abspath_file.split("/")[:-1])
 sys.path.append(skipgram_rnn_path)
 
 from tools.preprocessing import iter_reviews_as_model_inout, \
-                                get_inout_from_review, iter_reviews_file
-
+    get_inout_from_review, iter_reviews_file
 
 # get environnement info
 env = yaml.load(open(os.path.join(skipgram_rnn_path, "env.yml"), 'r'), Loader=Loader)
-
 
 # ----------------------------------------------------------------------------
 
@@ -38,8 +35,8 @@ PROJECT_PATH = env["project_abspath"]
 # rnn model default config
 DEFAULT_RNN_STORE_MODEL_PATH = os.path.join(PROJECT_PATH, "models/rnn")
 DEFAULT_RNN_MODEL_NAME = "model_test"
-DEFAULT_TRAINING_SIZE = 7500
-DEFAULT_TESTING_SIZE = 2500
+DEFAULT_TRAINING_SIZE = 25000
+DEFAULT_TESTING_SIZE = 25000
 
 # skipgram default config
 DEFAULT_SKIPGRAM_STORE_MODEL_PATH = os.path.join(PROJECT_PATH, "models/skipgram/")
@@ -47,13 +44,12 @@ DEFAULT_SKIPGRAM_MODEL_NAME = "model_test"
 SKIPGRAM_MODEL_CONFIG_FILE = "config.yml"
 
 PATHS_TRAIN_DATA = [os.path.join(PROJECT_PATH, "data/aclImdb/train/pos"),
-                      os.path.join(PROJECT_PATH, "data/aclImdb/train/neg")]
+                    os.path.join(PROJECT_PATH, "data/aclImdb/train/neg")]
 PATHS_TEST_DATA = [os.path.join(PROJECT_PATH, "data/aclImdb/test/pos"),
-                      os.path.join(PROJECT_PATH, "data/aclImdb/test/neg")]
+                   os.path.join(PROJECT_PATH, "data/aclImdb/test/neg")]
+
 
 #  ----------------------------------------------------------------------------
-
-
 
 
 # 82% classic embedding
@@ -70,7 +66,8 @@ def rnn(rnn_model_path,
         pred,
         epochs,
         training_size,
-        testing_size):
+        testing_size,
+        gpu):
     """
         Arguments:
             init (bool) :
@@ -87,10 +84,14 @@ def rnn(rnn_model_path,
     if init and not load:
         print('Build model...')
         model = Sequential()
-        # as the input shape is (None, embeddings_size) => DYNAMIC RNN
-        # CuDNNLSTM fast version of LSTM (can only be run with GPU)
-        model.add(LSTM(128, dropout=0.2, recurrent_dropout=0.2, input_shape=(None, embeddings_size)))
-        # model.add(CuDNNLSTM(128, input_shape=(None, embeddings_size)))
+        if gpu == 0:
+            # as the input shape is (None, embeddings_size) => DYNAMIC RNN
+            model.add(LSTM(128, dropout=0.2, recurrent_dropout=0.2, input_shape=(None, embeddings_size)))
+        else:
+            # as the input shape is (None, embeddings_size) => dynamic RNN
+            # CuDNNLSTM fast version of LSTM (can only be run with GPU)
+            model.add(CuDNNLSTM(128, input_shape=(None, embeddings_size)))
+            model.add(Dropout(0.2))
         model.add(Dense(1, activation='sigmoid'))
 
         # try using different optimizers and different optimizer configs
@@ -129,15 +130,15 @@ def rnn(rnn_model_path,
         print('Test...')
 
         testing_iterator = iter_reviews_as_model_inout(words_embeddings=words_embeddings,
-                                                        paths=PATHS_TEST_DATA,
-                                                        max_nb_reviews=testing_size)
-        confusion_matrix = np.zeros(shape=(2,2))
+                                                       paths=PATHS_TEST_DATA,
+                                                       max_nb_reviews=testing_size)
+        confusion_matrix = np.zeros(shape=(2, 2))
         for input, label in Bar('Processing', max=testing_size).iter(testing_iterator):
             prediction = model.predict_classes(x=np.array([input]))
             confusion_matrix[label, prediction] += 1
         print("Confusion matrix :")
         print(confusion_matrix)
-        print('Test accuracy:', np.sum(np.trace(confusion_matrix))/testing_size)
+        print('Test accuracy:', np.sum(np.trace(confusion_matrix)) / testing_size)
 
     if pred:
         all_review_paths = list(iter_reviews_file(paths=PATHS_TEST_DATA))
@@ -167,6 +168,7 @@ if __name__ == "__main__":
     parser.add_argument("-epochs", type=int, default=1)
     parser.add_argument("-training_size", type=int, default=DEFAULT_TRAINING_SIZE)
     parser.add_argument("-testing_size", type=int, default=DEFAULT_TESTING_SIZE)
+    parser.add_argument("-gpu", type=int, default=0)
 
     args = parser.parse_args()
 
@@ -187,4 +189,5 @@ if __name__ == "__main__":
         pred=args.pred,
         epochs=args.epochs,
         training_size=args.training_size,
-        testing_size=args.testing_size)
+        testing_size=args.testing_size,
+        gpu=args.gpu)
