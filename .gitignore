@@ -1,10 +1,12 @@
-data/*
+data/
 env.yml
 
 # Pycharm
 .idea/
 venv/
 __pycache__/
+
+models/
 
 *.model
 *.npy
