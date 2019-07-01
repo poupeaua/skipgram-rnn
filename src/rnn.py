@@ -5,13 +5,9 @@ import argparse
 import yaml
 from yaml import Loader
 import numpy as np
-import keras
-from keras.preprocessing import sequence
 from keras.models import Sequential, load_model
-from keras.layers import Dense, Embedding
+from keras.layers import Dense
 from keras.layers import LSTM, CuDNNLSTM
-from keras.datasets import imdb
-import progress
 from keras.layers import Dropout
 from progress.bar import Bar
 
