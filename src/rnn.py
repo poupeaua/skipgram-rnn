@@ -10,17 +10,15 @@ from keras.layers import Dense
 from keras.layers import LSTM, CuDNNLSTM
 from keras.layers import Dropout
 from progress.bar import Bar
+from tools.preprocessing import iter_reviews_as_model_inout, get_inout_from_review, iter_reviews_file
 
 # allows import from skipgram-rnn directory
-abspath_file = os.path.abspath(os.path.dirname(__file__))
-skipgram_rnn_path = "/".join(abspath_file.split("/")[:-1])
-sys.path.append(skipgram_rnn_path)
+ABSPATH_FILE = os.path.abspath(os.path.dirname(__file__))
+SKIPGRAM_RNN_PATH = "/".join(ABSPATH_FILE.split("/")[:-1])
+sys.path.append(SKIPGRAM_RNN_PATH)
 
-from tools.preprocessing import iter_reviews_as_model_inout, \
-    get_inout_from_review, iter_reviews_file
-
-# get environnement info
-env = yaml.load(open(os.path.join(skipgram_rnn_path, "env.yml"), 'r'), Loader=Loader)
+# get environment info
+env = yaml.load(open(os.path.join(SKIPGRAM_RNN_PATH, "env.yml"), 'r'), Loader=Loader)
 
 # ----------------------------------------------------------------------------
 
@@ -72,8 +70,8 @@ def rnn(rnn_model_path,
             test (bool) :
     """
     # path used for rnn model loading and saving and skipgram words embeddings
-    path_to_rnn_model_file = os.path.join(rnn_model_path, rnn_model_name, rnn_model_name+".h5")
-    path_to_sg_model_kv_file = os.path.join(sg_model_path, sg_model_name, sg_model_name+".kv")
+    path_to_rnn_model_file = os.path.join(rnn_model_path, rnn_model_name, rnn_model_name + ".h5")
+    path_to_sg_model_kv_file = os.path.join(sg_model_path, sg_model_name, sg_model_name + ".kv")
     words_embeddings = gensim.models.KeyedVectors.load(path_to_sg_model_kv_file, mmap="r")
     embeddings_size = sg_model_config["size"]
 
