@@ -1,12 +1,10 @@
 import gensim
 from gensim.models import Word2Vec
-import multiprocessing
 import logging
 import os
 import sys
 import argparse
 import yaml
-from yaml import Loader
 
 # allows import from skipgram-rnn directory
 abspath_file = os.path.abspath(os.path.dirname(__file__))
@@ -17,7 +15,7 @@ from tools.preprocessing import iter_reviews_file
 from tools.subsampling import subsample
 
 # get environnement info
-env = yaml.load(open(os.path.join(skipgram_rnn_path, "env.yml"), 'r'), Loader=Loader)
+env = yaml.load(open(os.path.join(skipgram_rnn_path, "env.yml"), 'r'), Loader=yaml.Loader)
 
 # API :
 # https://radimrehurek.com/gensim/models/base_any2vec.html#gensim.models.base_any2vec.BaseWordEmbeddingsModel
@@ -162,7 +160,7 @@ if __name__ == "__main__":
 
     # get model configuration
     stream = open(os.path.join(args.sg_model_path, args.sg_model_name, SKIPGRAM_MODEL_CONFIG_FILE), 'r')
-    sg_model_config = yaml.load(stream, Loader=Loader)
+    sg_model_config = yaml.load(stream, Loader=yaml.Loader)
 
     # execute skipgram
     skipgram(init=args.init,
