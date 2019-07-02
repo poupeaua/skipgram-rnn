@@ -10,12 +10,13 @@ from keras.layers import Dense
 from keras.layers import LSTM, CuDNNLSTM
 from keras.layers import Dropout
 from progress.bar import Bar
-from tools.preprocessing import iter_reviews_as_model_inout, get_inout_from_review, iter_reviews_file
 
 # allows import from skipgram-rnn directory
 ABSPATH_FILE = os.path.abspath(os.path.dirname(__file__))
 SKIPGRAM_RNN_PATH = "/".join(ABSPATH_FILE.split("/")[:-1])
 sys.path.append(SKIPGRAM_RNN_PATH)
+
+from tools.preprocessing import iter_reviews_as_model_inout, get_inout_from_review, iter_reviews_file
 
 # get environment info
 env = yaml.load(open(os.path.join(SKIPGRAM_RNN_PATH, "env.yml"), 'r'), Loader=Loader)
@@ -78,6 +79,7 @@ def rnn(rnn_model_path,
     if init and not load:
         print('Build model...')
         model = Sequential()
+        print("GPU", gpu)
         if gpu == 0:
             # as the input shape is (None, embeddings_size) => DYNAMIC RNN
             model.add(LSTM(128, dropout=0.2, recurrent_dropout=0.2, input_shape=(None, embeddings_size)))

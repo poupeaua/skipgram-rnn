@@ -6,7 +6,8 @@ env.yml
 venv/
 __pycache__/
 
-models/
+models/rnn/
+models/skipgram/
 
 *.model
 *.npy
