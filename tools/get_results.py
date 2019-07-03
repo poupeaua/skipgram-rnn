@@ -106,17 +106,18 @@ plot_confusion_matrix(best_cm, ['Mala', 'Buena'], normalize=True, title='Matriz 
 plt.savefig('cm.png')
 plt.show()
 
-# for w in windows:
-#     acc = []
-#     for s in sizes:
-#         model = 'model_{}_{}'.format(s, w)
-#         acc.append(results[model]['accuracy'])
-#     plt.plot(sizes, acc, label='window size = {}'.format(w), marker='.', linewidth='1')
-#
-# plt.xlabel('Tamaño de los Vectores de Palabras')
-# plt.ylabel('Precisión')
-# plt.title('Gráfico de Presición v/s Tamaño de Vector\npara Distintos Tamaños de Ventanas')
-# plt.grid(True)
-# plt.legend()
-# plt.savefig('plot.png')
-# plt.show()
+for w in windows:
+    acc = []
+    for s in sizes:
+        model = 'model_{}_{}'.format(s, w)
+        acc.append(results[model]['accuracy'])
+    plt.plot(sizes, acc, label='window size = {}'.format(w), marker='.', linewidth='1')
+    print(acc)
+
+plt.xlabel('Tamaño de los Vectores de Palabras')
+plt.ylabel('Precisión')
+plt.title('Gráfico de Presición v/s Tamaño de Vector\npara Distintos Tamaños de Ventanas')
+plt.grid(True)
+plt.legend()
+plt.savefig('plot.png')
+plt.show()
